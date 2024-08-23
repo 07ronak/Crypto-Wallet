@@ -2,13 +2,13 @@
 
 ## Overview
 
-This React application allows users to connect their Ethereum wallet using MetaMask and view their account address and ETH balance. It provides a simple interface for interacting with MetaMask and retrieving balance information.
+This React application allows users to connect their Ethereum wallet using MetaMask and view their account address and ETH balance. It also features a coin flip game where users can bet ETH and potentially double their tokens.
 
 ## Features
 
 - Connects to MetaMask.
-- Displays the connected Ethereum account address.
-- Shows the ETH balance of the connected account.
+- Displays the connected Ethereum account address and ETH balance.
+- **Coin Flip Game:** Users can bet ETH on a coin flip and win double their tokens if they guess correctly.
 
 ## Getting Started
 
