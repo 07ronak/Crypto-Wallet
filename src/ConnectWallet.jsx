@@ -64,7 +64,7 @@ const ConnectWallet = () => {
       } else {
         const totalAmount = balance - riskAmount;
         setBalance(totalAmount);
-        setResult(`Sorry, you lost ${riskAmount}. Better luck next time!`);
+        setResult(`Sorry, you lost ${riskAmount}ETH. Better luck next time!`);
       }
     } catch (error) {
       console.error("Error during coin flip:", error);
