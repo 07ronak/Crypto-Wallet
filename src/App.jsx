@@ -1,12 +1,13 @@
 import "./App.css";
-import WalletConnect from "./WalletConnect";
-import Wallet from "./Wallet";
+import ConnectWallet from "./ConnectWallet";
 
 function App() {
   return (
     <div className="App">
-      {/* <h1>Ethereum Wallet Connection</h1> */}
-      <Wallet />
+      <h1>Ethereum Wallet Connection</h1>
+      <img src="/mm.png" width={100} alt="" />
+      <br />
+      <ConnectWallet />
     </div>
   );
 }
