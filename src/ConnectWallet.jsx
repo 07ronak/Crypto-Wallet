@@ -86,11 +86,11 @@ const ConnectWallet = () => {
       return alert("Enter the Betting Amount before Flipping the coin");
 
     // Ensure the risk amount is less than or equal to the wallet balance
-    /* if (parseFloat(riskAmount) > balance) {
+    if (parseFloat(riskAmount) > balance) {
       return alert(
         "Insufficient balance in wallet to place this bet.\n\n\n *You may comment out this block of code to test implementation*"
       );
-    } */
+    }
 
     try {
       // Simulate a coin flip (randomly choose "heads" or "tails")
