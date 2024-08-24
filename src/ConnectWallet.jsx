@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import "./CoinFlipGame.css";
+import { ethers } from "ethers";
+import abi from "./CoinFlipABI.json";
+import { useEffect } from "react";
 
-/* 0xDD13a9038Afe590251aC7b3A54903D358D012C28 */
+const contractAddress = "0x3350F79e4488166eEc3cc4f1ed70762E1E277B77";
+const contractABI = abi;
 
 const ConnectWallet = () => {
   const [account, setAccount] = useState(null);
@@ -9,6 +13,24 @@ const ConnectWallet = () => {
   const [selectedSide, setSelectedSide] = useState("heads");
   const [riskAmount, setRiskAmount] = useState("");
   const [result, setResult] = useState("");
+  const [contract, setContract] = useState(null);
+
+  useEffect(() => {
+    if (window.ethereum) {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      /* const provider = new ethers.JsonRpcProvider(url) */
+      const setupContract = async () => {
+        const signer = await provider.getSigner();
+        const coinFlipContract = new ethers.Contract(
+          contractAddress,
+          contractABI,
+          signer
+        );
+        setContract(coinFlipContract);
+      };
+      setupContract();
+    }
+  }, []);
 
   const connectMetamask = async () => {
     // Check if Metamask is installed in the browser
@@ -29,7 +51,6 @@ const ConnectWallet = () => {
         });
         const account = accounts[0];
         setAccount(account);
-        /*  console.log(account); */
 
         // Fetch the balance of the connected account
         const balanceResult = await window.ethereum.request({
@@ -38,14 +59,11 @@ const ConnectWallet = () => {
         });
 
         //The returned balance is in hex.
-
         const wei = parseInt(balanceResult, 16); // convert 'hex' to 'decimal number'
 
         const balance = wei / 10 ** 18; //Convert wei to ETH
 
         setBalance(balance);
-
-        /* console.log(balance); */
       } catch (error) {
         console.error("Error connecting to Metamask:", error);
         alert("Error connecting to Metamask: " + error.message);
@@ -55,28 +73,6 @@ const ConnectWallet = () => {
       alert(
         "Metamask not detected. Please install Metamask to use this feature."
       );
-    }
-  };
-
-  const sendTransaction = async (amountInEth) => {
-    if (!account) return;
-
-    const amountInWei = (amountInEth * 10 ** 18).toString(16); // Convert ETH to Wei
-    try {
-      await window.ethereum.request({
-        method: "eth_sendTransaction",
-        params: [
-          {
-            from: account,
-            to: account, // Replace with your contract address
-            value: amountInWei,
-          },
-        ],
-      });
-      alert("Transaction sent successfully.");
-    } catch (error) {
-      console.error("Transaction failed:", error);
-      alert("Transaction failed: " + error.message);
     }
   };
 
@@ -93,13 +89,32 @@ const ConnectWallet = () => {
     }
 
     try {
-      // Simulate a coin flip (randomly choose "heads" or "tails")
-      const coinFlipResult = Math.random() < 0.5 ? "heads" : "tails";
-      // Determine win or loss
-      if (coinFlipResult === selectedSide) {
+      const transaction = await contract.flipCoin(selectedSide === "heads", {
+        value: ethers.parseEther(riskAmount),
+      });
+
+      setResult("Transaction sent. Waiting for confirmation...");
+
+      await transaction.wait();
+
+      const isWin = await transaction.events[0].args[0];
+      if (isWin) {
         const winAmount = riskAmount * 2;
         const totalAmount = winAmount + balance;
         setBalance(totalAmount);
+        setResult(`Congratulations! You won ${riskAmount * 2} ETH.`);
+      } else {
+        setBalance(balance);
+        setResult(`Sorry, you lost. Better luck next time!`);
+      }
+
+      // Display transaction link
+      console.log(`Transaction Hash: ${transaction.hash}`);
+
+      /* // Simulate a coin flip (randomly choose "heads" or "tails")
+      const coinFlipResult = Math.random() < 0.5 ? "heads" : "tails";
+      // Determine win or loss
+      if (coinFlipResult === selectedSide) {
         setResult(`Congratulations! You won ${winAmount}ETH.`);
         await sendTransaction(riskAmount * 2); //Send Double the tokens back
       } else {
@@ -108,7 +123,7 @@ const ConnectWallet = () => {
         const totalAmount = balance - riskAmount;
         setBalance(totalAmount);
         setResult(`Sorry, you lost ${riskAmount}ETH. Better luck next time!`);
-      }
+      } */
     } catch (error) {
       console.error("Error during coin flip:", error);
       alert("Error during coin flip: " + error.message);
@@ -146,8 +161,8 @@ const ConnectWallet = () => {
             <input
               className="risk-amount"
               type="number"
-              min="0.01"
-              step="0.01"
+              min="0.0001"
+              step="0.0001"
               value={riskAmount}
               onChange={(e) => setRiskAmount(e.target.value)}
             />
@@ -163,3 +178,25 @@ const ConnectWallet = () => {
 };
 
 export default ConnectWallet;
+
+/* const sendTransaction = async (amountInEth) => {
+  if (!account) return;
+
+  const amountInWei = (amountInEth * 10 ** 18).toString(16); // Convert ETH to Wei
+  try {
+    await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [
+        {
+          from: account,
+          to: account, // Replace with your contract address
+          value: amountInWei,
+        },
+      ],
+    });
+    alert("Transaction sent successfully.");
+  } catch (error) {
+    console.error("Transaction failed:", error);
+    alert("Transaction failed: " + error.message);
+  }
+}; */
