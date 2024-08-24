@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import "./CoinFlipGame.css";
 
+/* 0xDD13a9038Afe590251aC7b3A54903D358D012C28 */
+
 const ConnectWallet = () => {
   const [account, setAccount] = useState(null);
   const [balance, setBalance] = useState(null);
@@ -12,6 +14,15 @@ const ConnectWallet = () => {
     // Check if Metamask is installed in the browser
     if (window.ethereum) {
       try {
+        // Ensure the user is on a testnet (Sepolia)
+        const chainId = await window.ethereum.request({
+          method: "eth_chainId",
+        });
+        if (chainId !== "0xaa36a7") {
+          alert("Please switch to Sepholia testnet in Metamask!");
+          return;
+        }
+
         // Request access to the user's Ethereum accounts
         const accounts = await window.ethereum.request({
           method: "eth_requestAccounts",
@@ -47,10 +58,39 @@ const ConnectWallet = () => {
     }
   };
 
-  const flipCoin = () => {
+  const sendTransaction = async (amountInEth) => {
+    if (!account) return;
+
+    const amountInWei = (amountInEth * 10 ** 18).toString(16); // Convert ETH to Wei
+    try {
+      await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: account,
+            to: account, // Replace with your contract address
+            value: amountInWei,
+          },
+        ],
+      });
+      alert("Transaction sent successfully.");
+    } catch (error) {
+      console.error("Transaction failed:", error);
+      alert("Transaction failed: " + error.message);
+    }
+  };
+
+  const flipCoin = async () => {
     if (!account || /* !riskAmount || */ !selectedSide) return;
     if (!riskAmount)
       return alert("Enter the Betting Amount before Flipping the coin");
+
+    // Ensure the risk amount is less than or equal to the wallet balance
+    /* if (parseFloat(riskAmount) > balance) {
+      return alert(
+        "Insufficient balance in wallet to place this bet.\n\n\n *You may comment out this block of code to test implementation*"
+      );
+    } */
 
     try {
       // Simulate a coin flip (randomly choose "heads" or "tails")
@@ -61,7 +101,10 @@ const ConnectWallet = () => {
         const totalAmount = winAmount + balance;
         setBalance(totalAmount);
         setResult(`Congratulations! You won ${winAmount}ETH.`);
+        await sendTransaction(riskAmount * 2); //Send Double the tokens back
       } else {
+        setResult(`Sorry, you lost. Better luck next time!`);
+        return;
         const totalAmount = balance - riskAmount;
         setBalance(totalAmount);
         setResult(`Sorry, you lost ${riskAmount}ETH. Better luck next time!`);
